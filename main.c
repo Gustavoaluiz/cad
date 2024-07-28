@@ -7,15 +7,15 @@
 // #define N 20
 
 typedef struct {
-    double* alphas;
-    double* scores;
-    int* usos;
+    double* alphas;  // Lista com os alphas possíveis de serem escolhidos
+    double* scores;  // Quantas vezes cada alpha foi usado ao longo das iterações
+    int* usos;  // Quantidade de amostras de cada valor de alphas para começar a atualizar as probabilidades
     int num_amostras;
-    int qtd;
+    int qtd;  // Quantidade de alphas possíveis
 } Alphas;
 
 typedef struct {
-    float** matriz_custo;
+    float** matriz_custo;  // Matriz com os custos de ir de uma cidade para outra
     Alphas alpha;
     int max_iter;
     int cidade_partida;
@@ -67,6 +67,10 @@ void inicializa_grasp(GraspReativo* grasp, float** matriz, double* alphas, int q
 }
 
 void atualizar_alpha_prob(GraspReativo* grasp, int index, float custo_solucao) {
+    /*
+    Atualiza o score do alpha com o inverso do custo da solução,
+    ou seja, um custo menor gera um score maior
+    */
     grasp->alpha.scores[index] += 1.0 / (custo_solucao + 1);
 }
 
@@ -240,6 +244,9 @@ void gerar_solucao(GraspReativo* grasp, int tamanho_matriz, int max_iter_local) 
 
 int main() {
     srand(time(NULL));
+    clock_t inicio, fim;
+    double tempoGasto;
+    inicio = clock();  
 
     // Exemplo de inicialização da matriz de custo e parâmetros
     int tamanho_matriz = N;
@@ -252,7 +259,7 @@ int main() {
     int qtd_alphas = sizeof(alphas) / sizeof(alphas[0]);
     int num_amostras = 10;
     int max_grasp_iter = 50;
-    int max_iter_local = 500;
+    int max_iter_local = 1000;
     int cidade_partida = 0;
 
     GraspReativo grasp;
@@ -260,8 +267,11 @@ int main() {
 
     gerar_solucao(&grasp, tamanho_matriz, max_iter_local);
 
-    printf("Melhor solução encontrada com custo %f:\n", grasp.melhor_custo);
+    fim = clock();
+    tempoGasto = ((double)(fim - inicio)) / CLOCKS_PER_SEC;
 
+    printf("Melhor solução encontrada com custo %f:\n", grasp.melhor_custo);
+    printf("Tempo gasto: %.2fs\n", tempoGasto);
     // Libera a memória alocada
     for (int i = 0; i < tamanho_matriz; i++) {
         free(matriz[i]);
