@@ -3,8 +3,8 @@
 #include <time.h>
 
 #define INF 1000000
-//#define N 228
-#define N 20
+#define N 228
+// #define N 20
 
 typedef struct {
     double* alphas;
@@ -22,6 +22,32 @@ typedef struct {
     int* melhor_solucao;
     float melhor_custo;
 } GraspReativo;
+
+
+float** ler_matriz_custo(const char* nome_arquivo, int tamanho_matriz) {
+    FILE* arquivo = fopen(nome_arquivo, "r");
+    if (arquivo == NULL) {
+        fprintf(stderr, "Erro ao abrir o arquivo %s\n", nome_arquivo);
+        exit(1);
+    }
+
+    float** matriz = (float**)malloc(tamanho_matriz * sizeof(float*));
+    for (int i = 0; i < tamanho_matriz; i++) {
+        matriz[i] = (float*)malloc(tamanho_matriz * sizeof(float));
+    }
+
+    for (int i = 0; i < tamanho_matriz; i++) {
+        for (int j = 0; j < tamanho_matriz; j++) {
+            if (fscanf(arquivo, "%f", &matriz[i][j]) != 1) {
+                fprintf(stderr, "Erro ao ler o arquivo %s\n", nome_arquivo);
+                exit(1);
+            }
+        }
+    }
+
+    fclose(arquivo);
+    return matriz;
+}
 
 void inicializa_alphas(Alphas* alpha, double* alphas, int qtd, int num_amostras) {
     alpha->alphas = alphas;
@@ -189,6 +215,7 @@ void busca_local(int* solucao, GraspReativo* grasp, int tamanho_matriz, int max_
 
 void gerar_solucao(GraspReativo* grasp, int tamanho_matriz, int max_iter_local) {
     for (int iteracao = 0; iteracao < grasp->max_iter; iteracao++) {
+        printf("Iteração graspzada %d\n", iteracao);
         int alpha_index = retorna_alpha(grasp, iteracao);
         double alpha = grasp->alpha.alphas[alpha_index];
 
@@ -216,39 +243,10 @@ int main() {
 
     // Exemplo de inicialização da matriz de custo e parâmetros
     int tamanho_matriz = N;
-
-    float matriz_exemplo[20][20] = 
-    {
-        {0   , 59.6, 198 , 51.0, 260 , 26.7, 124 , 207 , 142 , 21.1, 260 , 175 , 169 , 321 , 281 , 93.8, 208 , 426 , 29.9, 409},
-        {59.3, 0   , 159 , 105 , 207 , 82.1, 63.1, 154 , 158 , 69  , 273 , 139 , 220 , 380 , 228 , 79.0, 262 , 489 , 70.2, 377},
-        {199 , 159 , 0   , 187 , 115 , 225 , 162 , 60.6, 317 , 193 , 259 , 244 , 249 , 518 , 136 , 104 , 356 , 623 , 228 , 448},
-        {51.0, 104 , 187 , 0   , 304 , 77.1, 173 , 252 , 193 , 38.9, 211 , 225 , 121 , 373 , 325 , 82.8, 185 , 477 , 80.3, 458},
-        {259 , 205 , 114 , 300 , 0   , 282 , 200 , 57.5, 367 , 261 , 348 , 276 , 363 , 580 , 38.7, 218 , 462 , 684 , 283 , 430},
-        {26.9, 81.2, 225 , 77.0, 281 , 0   , 145 , 229 , 137 , 46.8, 286 , 191 , 195 , 315 , 302 , 121 , 232 , 419 , 24.5, 422},
-        {124 , 62.8, 160 , 169 , 199 , 146 , 0   , 150 , 169 , 133 , 333 , 82.6, 287 , 444 , 220 , 139 , 326 , 548 , 146 , 345},
-        {208 , 154 , 62.0, 249 , 57.3, 233 , 159 , 0   , 314 , 218 , 316 , 206 , 311 , 528 , 78.6, 166 , 413 , 633 , 234 , 416},
-        {142 , 159 , 327 , 193 , 365 , 136 , 169 , 317 , 0   , 162 , 402 , 179 , 314 , 379 , 387 , 235 , 348 , 463 , 113 , 382},
-        {23.6, 58.0, 193 , 40.3, 269 , 49.8, 133 , 217 , 165 , 0   , 249 , 190 , 159 , 345 , 290 , 84.8, 222 , 450 , 53.0, 423},
-        {262 , 269 , 258 , 213 , 347 , 288 , 334 , 315 , 404 , 250 , 0   , 405 , 119 , 497 , 359 , 194 , 206 , 602 , 291 , 643},
-        {176 , 139 , 242 , 225 , 275 , 187 , 82.2, 198 , 179 , 189 , 409 , 0   , 344 , 493 , 290 , 215 , 382 , 597 , 164 , 243},
-        {169 , 219 , 249 , 120 , 362 , 195 , 285 , 309 , 311 , 157 , 119 , 356 , 0   , 402 , 374 , 145 , 130 , 506 , 193 , 576},
-        {321 , 380 , 518 , 372 , 579 , 315 , 449 , 527 , 379 , 343 , 498 , 494 , 404 , 0   , 601 , 414 , 289 , 108 , 338 , 727},
-        {281 , 226 , 135 , 322 , 39.0, 304 , 221 , 79.7, 384 , 282 , 355 , 291 , 373 , 601 , 0   , 239 , 483 , 706 , 305 , 445},
-        {95.2, 77.4, 105 , 82.7, 218 , 121 , 144 , 164 , 233 , 89.3, 198 , 215 , 145 , 414 , 240 , 0   , 252 , 519 , 124 , 453},
-        {209 , 262 , 356 , 186 , 462 , 235 , 331 , 410 , 348 , 220 , 206 , 382 , 130 , 289 , 483 , 252 , 0   , 394 , 236 , 616},
-        {425 , 489 , 623 , 477 , 684 , 420 , 553 , 631 , 431 , 448 , 602 , 598 , 508 , 108 , 705 , 519 , 393 , 0   , 443 , 831},
-        {29.1, 70.2, 227 , 82.7, 279 , 22.8, 146 , 227 , 114 , 48.9, 292 , 167 , 201 , 336 , 300 , 123 , 235 , 440 , 0   , 401},
-        {410 , 377 , 447 , 459 , 430 , 422 , 345 , 409 , 382 , 423 , 643 , 243 , 577 , 726 , 445 , 453 , 616 , 831 , 399 , 0}
-    };
+    const char* nome_arquivo = "data.txt";
 
     // Converte a matriz estática para um ponteiro de ponteiros
-    float** matriz = (float**)malloc(tamanho_matriz * sizeof(float*));
-    for (int i = 0; i < tamanho_matriz; i++) {
-        matriz[i] = (float*)malloc(tamanho_matriz * sizeof(float));
-        for (int j = 0; j < tamanho_matriz; j++) {
-            matriz[i][j] = matriz_exemplo[i][j];
-        }
-    }
+    float** matriz = ler_matriz_custo(nome_arquivo, tamanho_matriz);
 
     double alphas[] = {0.2, 0.25, 0.3, 0.35, 0.4};
     int qtd_alphas = sizeof(alphas) / sizeof(alphas[0]);
